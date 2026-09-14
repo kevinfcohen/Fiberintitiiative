@@ -1,0 +1,46 @@
+name: Publish Fiber Field Lab
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the source
+        uses: actions/checkout@v6
+      - name: Validate JavaScript and required files
+        run: |
+          node --check dist/app.js
+          node --check dist/sw.js
+          test -f dist/index.html
+          test -f dist/blueprint.html
+          test -f dist/manifest.webmanifest
+          test -f dist/icon-192.png
+          test -f dist/icon-512.png
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload the learning website
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
